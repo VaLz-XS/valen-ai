@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valen AI</title>
+<!-- INI SCRIPT PUTER.JS-NYA -->
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  body {
+    background: #0d1a14;
+    color: #cbc8bd;
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .box {
+    background: #1a1a1a;
+    border: 2px solid #7dffa8;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px rgba(125, 255, 168, 0.2);
+  }
+  .header {
+    background: #1c2a8a;
+    color: #fff;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg-user { background: #003322; padding: 10px; border-radius: 8px; align-self: flex-end; max-width: 80%; }
+  .msg-bot { background: #1e1f22; border-left: 3px solid #7dffa8; padding: 10px; border-radius: 8px; align-self: flex-start; max-width: 80%; color: #fff;}
+  .input-area { display: flex; border-top: 2px solid #333; }
+  input { flex: 1; padding: 12px; background: #000; color: #fff; border: none; outline: none; font-family: inherit;}
+  button { padding: 0 20px; background: #7dffa8; color: #000; border: none; font-weight: bold; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="header">Valen AI</div>
+  <div class="chat-box" id="chatBox">
+    <div class="msg-bot">Halo! Aku Valen AI. Ada yang bisa dibantu?</div>
+  </div>
+  <div class="input-area">
+    <input type="text" id="input" placeholder="Ketik pesan..." onkeypress="if(event.key==='Enter') kirim()">
+    <button onclick="kirim()">Kirim</button>
+  </div>
+</div>
+
+<script>
+  async function kirim() {
+    var input = document.getElementById("input");
+    var chatBox = document.getElementById("chatBox");
+    var text = input.value.trim();
+    if(!text) return;
+
+    // Tampilkan pesan user
+    chatBox.innerHTML += '<div class="msg-user">' + text + '</div>';
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Tampilkan loading
+    var loadingId = "loading-" + Date.now();
+    chatBox.innerHTML += '<div class="msg-bot" id="' + loadingId + '">Kurumi AI: mikir dulu...</div>';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+      // PANGGIL AI PUTER
+      var response = await puter.ai.chat(
+        "Kamu adalah asisten AI yang ramah. Jawab dengan bahasa Indonesia yang santai dan jelas. Pertanyaan: " + text,
+        { model: 'gpt-5.4-nano' }
+      );
+
+      // Hapus loading, tampilkan jawaban
+      document.getElementById(loadingId).remove();
+      chatBox.innerHTML += '<div class="msg-bot">' + response + '</div>';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (error) {
+      document.getElementById(loadingId).innerText = "Error: " + error.message;
+    }
+  }
+</script>
+
+</body>
+</html>
