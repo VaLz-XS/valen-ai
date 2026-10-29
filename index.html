@@ -4,38 +4,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Valen AI</title>
-<!-- INI SCRIPT PUTER.JS-NYA -->
 <script src="https://js.puter.com/v2/"></script>
+<!-- LIBRARY BUAT WARNain KODE (HIGHLIGHT.JS) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <style>
   body {
     background: #0d1a14;
     color: #cbc8bd;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Courier New', monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 15px;
   }
   .box {
     background: #1a1a1a;
     border: 2px solid #7dffa8;
     border-radius: 8px;
     width: 100%;
-    max-width: 500px;
-    height: 80vh;
+    max-width: 600px; /* Agak lebar biar kode nggak kepotong */
+    height: 85vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 20px rgba(125, 255, 168, 0.2);
+    overflow: hidden;
   }
   .header {
     background: #1c2a8a;
     color: #fff;
-    padding: 10px;
+    padding: 12px;
     font-weight: bold;
     text-align: center;
+    font-size: 18px;
   }
   .chat-box {
     flex: 1;
@@ -43,13 +47,93 @@
     padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
   }
-  .msg-user { background: #003322; padding: 10px; border-radius: 8px; align-self: flex-end; max-width: 80%; }
-  .msg-bot { background: #1e1f22; border-left: 3px solid #7dffa8; padding: 10px; border-radius: 8px; align-self: flex-start; max-width: 80%; color: #fff;}
-  .input-area { display: flex; border-top: 2px solid #333; }
-  input { flex: 1; padding: 12px; background: #000; color: #fff; border: none; outline: none; font-family: inherit;}
-  button { padding: 0 20px; background: #7dffa8; color: #000; border: none; font-weight: bold; cursor: pointer; }
+  .msg-user {
+    background: #003322;
+    padding: 10px 14px;
+    border-radius: 8px;
+    align-self: flex-end;
+    max-width: 85%;
+    color: #fff;
+    font-size: 14px;
+    white-space: pre-wrap;
+  }
+  .msg-bot-wrapper {
+    align-self: flex-start;
+    max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .msg-bot {
+    background: #1e1f22;
+    border-left: 3px solid #7dffa8;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: #eee;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  
+  /* STYLING BUAT KODE */
+  .msg-bot pre {
+    background: #000 !important;
+    padding: 10px !important;
+    border-radius: 6px !important;
+    overflow-x: auto !important;
+    border: 1px solid #333;
+    margin: 8px 0 !important;
+  }
+  .msg-bot code {
+    font-family: 'Courier New', monospace !important;
+    font-size: 13px !important;
+  }
+  
+  /* TOMBOL COPY */
+  .btn-copy {
+    background: transparent;
+    border: 1px solid #555;
+    color: #aaa;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    align-self: flex-start;
+    font-family: inherit;
+    transition: 0.2s;
+  }
+  .btn-copy:hover {
+    background: #7dffa8;
+    color: #000;
+    border-color: #7dffa8;
+  }
+
+  .input-area {
+    display: flex;
+    border-top: 2px solid #333;
+    background: #000;
+  }
+  input {
+    flex: 1;
+    padding: 15px;
+    background: transparent;
+    color: #fff;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  button.send-btn {
+    padding: 0 20px;
+    background: #7dffa8;
+    color: #000;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+  }
 </style>
 </head>
 <body>
@@ -57,45 +141,95 @@
 <div class="box">
   <div class="header">Valen AI</div>
   <div class="chat-box" id="chatBox">
-    <div class="msg-bot">Halo! Aku Valen AI. Ada yang bisa dibantu?</div>
+    <div class="msg-bot-wrapper">
+      <div class="msg-bot">Halo! Aku Valen AI. Aku bakal inget percakapan kita dari awal. Coba minta aku bikin kode HTML/JS!</div>
+    </div>
   </div>
   <div class="input-area">
     <input type="text" id="input" placeholder="Ketik pesan..." onkeypress="if(event.key==='Enter') kirim()">
-    <button onclick="kirim()">Kirim</button>
+    <button class="send-btn" onclick="kirim()">Kirim</button>
   </div>
 </div>
 
 <script>
+  // ARRAY BUAT NYIMPEN MEMORI AI
+  var chatHistory = [];
+
   async function kirim() {
     var input = document.getElementById("input");
     var chatBox = document.getElementById("chatBox");
     var text = input.value.trim();
     if(!text) return;
 
-    // Tampilkan pesan user
+    // 1. Tampilkan pesan user
     chatBox.innerHTML += '<div class="msg-user">' + text + '</div>';
     input.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Tampilkan loading
+    // 2. Simpan ke memori
+    chatHistory.push({ role: "user", content: text });
+
+    // Batasi memori 10 pesan terakhir biar nggak lemot/error
+    if(chatHistory.length > 10) chatHistory.shift();
+
+    // 3. Loading
     var loadingId = "loading-" + Date.now();
-    chatBox.innerHTML += '<div class="msg-bot" id="' + loadingId + '">Kurumi AI: mikir dulu...</div>';
+    chatBox.innerHTML += '<div class="msg-bot-wrapper" id="' + loadingId + '"><div class="msg-bot">Mikir dulu...</div></div>';
     chatBox.scrollTop = chatBox.scrollHeight;
 
     try {
-      // PANGGIL AI PUTER
-      var response = await puter.ai.chat(
-        "Kamu adalah asisten AI yang ramah. Jawab dengan bahasa Indonesia yang santai dan jelas. Pertanyaan: " + text,
-        { model: 'gpt-5.4-nano' }
-      );
+      // 4. Susun prompt dengan riwayat memori
+      var systemPrompt = "Kamu adalah Valen AI, asisten yang ramah dan pintar ngoding. Jawab pakai bahasa Indonesia santai. Kalau ngasih kode, WAJIB pakai format markdown blok kode (tiga backtick). Ini riwayat percakapan kita:\n";
+      var context = chatHistory.map(c => (c.role === "user" ? "User: " : "AI: ") + c.content).join("\n");
+      var finalPrompt = systemPrompt + context + "\n\nAI:";
 
-      // Hapus loading, tampilkan jawaban
+      // 5. Panggil Puter AI
+      var response = await puter.ai.chat(finalPrompt, { model: 'gpt-5.4-nano' });
+
+      // 6. Simpan jawaban AI ke memori
+      chatHistory.push({ role: "bot", content: response });
+
+      // 7. Hapus loading
       document.getElementById(loadingId).remove();
-      chatBox.innerHTML += '<div class="msg-bot">' + response + '</div>';
+
+      // 8. Format teks (deteksi kode pake backtick ```)
+      var formattedText = response
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") // Amankan HTML
+        .replace(/```([\s\S]*?)```/g, function(match, code) {
+          return '<pre><code class="hljs">' + code.trim() + '</code></pre>';
+        });
+
+      // 9. Bikin wrapper & tombol Copy
+      var wrapper = document.createElement("div");
+      wrapper.className = "msg-bot-wrapper";
+
+      var botMsg = document.createElement("div");
+      botMsg.className = "msg-bot";
+      botMsg.innerHTML = formattedText; // Pakai innerHTML biar tag <pre> jalan
+      
+      var btnCopy = document.createElement("button");
+      btnCopy.className = "btn-copy";
+      btnCopy.innerHTML = "📋 Copy Teks";
+      btnCopy.onclick = function() {
+        navigator.clipboard.writeText(response).then(() => {
+          btnCopy.innerHTML = "✅ Tercopy!";
+          setTimeout(() => btnCopy.innerHTML = "📋 Copy Teks", 2000);
+        });
+      };
+
+      wrapper.appendChild(botMsg);
+      wrapper.appendChild(btnCopy);
+      chatBox.appendChild(wrapper);
+
+      // 10. Warnain kodenya pakai Highlight.js
+      botMsg.querySelectorAll('pre code').forEach((el) => {
+        hljs.highlightElement(el);
+      });
+
       chatBox.scrollTop = chatBox.scrollHeight;
 
     } catch (error) {
-      document.getElementById(loadingId).innerText = "Error: " + error.message;
+      document.getElementById(loadingId).innerHTML = '<div class="msg-bot">Error: ' + error.message + '</div>';
     }
   }
 </script>
